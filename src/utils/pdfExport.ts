@@ -281,3 +281,114 @@ export function exportFinancePDF(
 
   doc.save(`Extrato_Financeiro_${mes.replace('/', '-')}.pdf`);
 }
+
+export function exportProposalPDF(
+  proposta: { titulo: string; conteudo: string; valor_total: number | null; created_at: string },
+  cliente?: { nome: string; empresa: string }
+) {
+  const doc = new jsPDF();
+  const blue = [0, 102, 204] as const;
+  const dark = [29, 29, 31] as const;
+  const gray = [107, 114, 128] as const;
+  const lightGray = [245, 245, 247] as const;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  let y = 0;
+
+  // Header
+  doc.setFillColor(...blue);
+  doc.rect(0, 0, pageWidth, 40, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Proposta Comercial', 14, 18);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Gerada em ${new Date(proposta.created_at).toLocaleDateString('pt-BR')}  ·  Sistema Pessoal WG`, 14, 30);
+
+  y = 54;
+
+  // Title Box
+  doc.setFillColor(...lightGray);
+  doc.roundedRect(14, y - 8, pageWidth - 28, 25, 3, 3, 'F');
+  doc.setTextColor(...dark);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text(proposta.titulo, 20, y + 2);
+
+  if (cliente) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...gray);
+    doc.text(`Cliente: ${cliente.nome} ${cliente.empresa ? `· ${cliente.empresa}` : ''}`, 20, y + 10);
+  }
+
+  y += 30;
+
+  // Content
+  doc.setTextColor(...dark);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+
+  // Simple markdown-ish to plain text for jsPDF
+  const lines = proposta.conteudo.split('\n');
+  lines.forEach(line => {
+    if (y > pageHeight - 30) {
+      doc.addPage();
+      y = 20;
+    }
+
+    if (line.startsWith('# ')) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text(line.replace('# ', ''), 14, y);
+      y += 10;
+    } else if (line.startsWith('## ')) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text(line.replace('## ', ''), 14, y);
+      y += 8;
+    } else if (line.startsWith('### ')) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(line.replace('### ', ''), 14, y);
+      y += 7;
+    } else {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      
+      // Handle bold in line **text**
+      const cleanLine = line.replace(/\*\*(.*?)\*\*/g, '$1');
+      const wrappedLines = doc.splitTextToSize(cleanLine, pageWidth - 28);
+      wrappedLines.forEach((l: string) => {
+        if (y > pageHeight - 20) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(l, 14, y);
+        y += 5;
+      });
+      if (line.trim() === '') y += 2;
+    }
+  });
+
+  if (proposta.valor_total) {
+    y += 10;
+    if (y > pageHeight - 30) { doc.addPage(); y = 20; }
+    doc.setFillColor(...lightGray);
+    doc.roundedRect(14, y - 5, pageWidth - 28, 15, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...blue);
+    doc.text(`Investimento Total: R$ ${proposta.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, y + 5);
+  }
+
+  // Footer
+  doc.setFillColor(...blue);
+  doc.rect(0, pageHeight - 12, pageWidth, 12, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.text('Sistema Pessoal WG  ·  Proposta gerada automaticamente', 14, pageHeight - 4);
+
+  doc.save(`Proposta_${proposta.titulo.replace(/\s+/g, '_')}.pdf`);
+}

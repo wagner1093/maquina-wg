@@ -10,6 +10,10 @@ import Content from './pages/Content';
 import Traffic from './pages/Traffic';
 import Assistant from './pages/Assistant';
 import Clients from './pages/Clients';
+import Reminders from './pages/Reminders';
+import EditorialCalendar from './pages/EditorialCalendar';
+import Pipeline from './pages/Pipeline';
+import Proposals from './pages/Proposals';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -32,6 +36,10 @@ function App() {
           <Route path="traffic" element={<Traffic />} />
           <Route path="content" element={<Content />} />
           <Route path="assistant" element={<Assistant />} />
+          <Route path="reminders" element={<Reminders />} />
+          <Route path="calendar" element={<EditorialCalendar />} />
+          <Route path="pipeline" element={<Pipeline />} />
+          <Route path="proposals" element={<Proposals />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Search, AlertCircle } from 'lucide-react';
+import { Plus, Search, AlertCircle, Sparkles, FileText, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 type Hospedagem = {
   id: string;
@@ -15,6 +16,7 @@ type Hospedagem = {
 
 export default function Hosting() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [clientes, setClientes] = useState<Hospedagem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,6 +27,12 @@ export default function Hosting() {
   const [plano, setPlano] = useState('');
   const [vencimento, setVencimento] = useState('');
   const [valor, setValor] = useState('');
+
+  // Proposal State
+  const [showProposal, setShowProposal] = useState(false);
+  const [pNome, setPNome] = useState('');
+  const [pValor, setPValor] = useState('');
+  const [creatingProposal, setCreatingProposal] = useState(false);
 
   const fetchClientes = async () => {
     setLoading(true);
@@ -98,6 +106,50 @@ export default function Hosting() {
     }
   };
 
+  const handleCreateProposal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !pNome || !pValor) return;
+
+    setCreatingProposal(true);
+    const content = `# Proposta de Hospedagem Premium
+
+## Resumo do Plano
+Este plano oferece o que há de mais moderno em hospedagem e performance, ideal para quem busca velocidade e segurança.
+
+## O que está incluso:
+- **Até 50 sites**: Flexibilidade total para seu portfólio.
+- **30 Créditos de IA**: Use nosso construtor de sites inteligente.
+- **50 GB NVME**: Armazenamento de altíssima velocidade.
+- **E-mails Profissionais**: 5 caixas por site (grátis por 1 ano).
+- **5 Aplicativos Node.js**: Gerenciamento profissional de apps.
+- **Backups Diários**: Seus dados sempre seguros.
+- **Loja Virtual com IA**: Pronta para vender.
+- **WordPress Premium**: Agente com IA, CDN Grátis e Multisite.
+
+## Investimento
+- **Valor da Proposta**: R$ ${parseFloat(pValor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+- **Condições**: Ativação imediata.`;
+
+    const { error } = await supabase.from('maquinawg_propostas').insert([{
+      user_id: user.id,
+      titulo: `Hospedagem Premium — ${pNome}`,
+      conteudo: content,
+      valor_total: parseFloat(pValor),
+      status: 'Rascunho'
+    }]);
+
+    setCreatingProposal(false);
+    if (!error) {
+      if(confirm('Proposta criada com sucesso! Deseja ver na aba de Propostas?')) {
+        navigate('/proposals');
+      }
+      setShowProposal(false);
+      setPNome(''); setPValor('');
+    } else {
+      alert('Erro ao criar proposta: ' + error.message);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -105,9 +157,14 @@ export default function Hosting() {
           <h1 className="text-3xl font-bold tracking-tight">Hospedagem</h1>
           <p className="text-gray-500 text-sm mt-1">Gestão de domínios, servidores e alertas de vencimento.</p>
         </div>
-        <button onClick={() => setShowAdd(!showAdd)} className="btn-primary w-full md:w-auto flex items-center justify-center gap-2">
-          <Plus className="w-4 h-4" /> Novo Cliente
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowProposal(true)} className="btn-secondary w-full md:w-auto flex items-center justify-center gap-2">
+            <Sparkles className="w-4 h-4 text-purple-500" /> Criar Proposta
+          </button>
+          <button onClick={() => setShowAdd(!showAdd)} className="btn-primary w-full md:w-auto flex items-center justify-center gap-2">
+            <Plus className="w-4 h-4" /> Novo Cliente
+          </button>
+        </div>
       </header>
 
       {showAdd && (
@@ -141,6 +198,43 @@ export default function Hosting() {
               <button type="submit" className="btn-primary">Registrar</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {showProposal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-500" /> Nova Proposta Pré-definida
+              </h2>
+              <button onClick={() => setShowProposal(false)} className="p-1 hover:bg-gray-100 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-500 mb-6">
+              Esta ação criará uma proposta com o template <strong>Hospedagem Premium</strong> e todos os itens profissionais inclusos.
+            </p>
+
+            <form onSubmit={handleCreateProposal} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Nome do Cliente</label>
+                <input required type="text" className="input-field" value={pNome} onChange={e => setPNome(e.target.value)} placeholder="Ex: João Silva" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Valor da Proposta (R$)</label>
+                <input required type="number" step="0.01" className="input-field" value={pValor} onChange={e => setPValor(e.target.value)} placeholder="0.00" />
+              </div>
+              
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => setShowProposal(false)} className="btn-secondary flex-1">Cancelar</button>
+                <button type="submit" disabled={creatingProposal} className="btn-primary flex-1 flex items-center justify-center gap-2">
+                  {creatingProposal ? 'Criando...' : <><FileText className="w-4 h-4" /> Criar Proposta</>}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
