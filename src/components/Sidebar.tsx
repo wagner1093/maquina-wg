@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Wallet, Server, Sparkles, MessageSquare, LogOut,
   TrendingUp, Users, Bell, Calendar, FileText, ChevronRight
