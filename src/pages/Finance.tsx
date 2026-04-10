@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Wallet, Search, CheckCircle, Download } from 'lucide-react';
+import { Plus, Wallet, Search, CheckCircle, Download, Trash2 } from 'lucide-react';
 import AIContextPanel from '../components/AIContextPanel';
 import { exportFinancePDF } from '../utils/pdfExport';
 
@@ -23,7 +23,8 @@ export default function Finance() {
   const [showAdd, setShowAdd] = useState(false);
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState('');
-  const [valor, setValor] = useState('');
+  const [valorDisplay, setValorDisplay] = useState('');
+  const [valorReal, setValorReal] = useState(0);
   const [dia, setDia] = useState('');
   const [competencia, setCompetencia] = useState('');
 
@@ -45,6 +46,35 @@ export default function Finance() {
     fetchProjetos();
   }, [user]);
 
+  // Formatting Helpers
+  const formatCurrency = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    const amount = parseFloat(digits) / 100;
+    if (isNaN(amount)) return '';
+    return amount.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  };
+
+  const parseCurrencyToFloat = (formattedValue: string) => {
+    return parseFloat(formattedValue.replace(/\D/g, '')) / 100;
+  };
+
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCurrency(e.target.value);
+    setValorDisplay(formatted);
+    setValorReal(parseCurrencyToFloat(formatted));
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    let formatted = value;
+    if (value.length > 2) formatted = `${value.slice(0, 2)}/${value.slice(2)}`;
+    if (value.length > 4) formatted = `${value.slice(0, 2)}/${value.slice(2, 4)}/${value.slice(4, 8)}`;
+    setCompetencia(formatted);
+  };
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -54,7 +84,7 @@ export default function Finance() {
         user_id: user.id,
         nome_projeto: nome,
         tipo_servico: tipo,
-        valor_mensal: parseFloat(valor),
+        valor_mensal: valorReal,
         dia_vencimento: parseInt(dia, 10),
         competencia: competencia,
         status_pagamento: 'Aguardando'
@@ -63,10 +93,25 @@ export default function Finance() {
 
     if (!error) {
       setShowAdd(false);
-      setNome(''); setTipo(''); setValor(''); setDia(''); setCompetencia('');
+      setNome(''); setTipo(''); setValorDisplay(''); setValorReal(0); setDia(''); setCompetencia('');
       fetchProjetos();
     } else {
-      alert('Failed to add project: ' + error.message);
+      alert('Erro ao adicionar projeto: ' + error.message);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este registro?')) return;
+    
+    const { error } = await supabase
+      .from('maquinawg_financeiro_projetos')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
+      fetchProjetos();
+    } else {
+      alert('Erro ao excluir: ' + error.message);
     }
   };
 
@@ -113,7 +158,7 @@ export default function Finance() {
             </div>
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">Receita Mensal Esperada</p>
-              <h2 className="text-2xl font-semibold mt-0.5">R$ {totalReceita.toFixed(2).replace('.', ',')}</h2>
+              <h2 className="text-2xl font-semibold mt-0.5">R$ {totalReceita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h2>
             </div>
           </div>
         </div>
@@ -124,7 +169,7 @@ export default function Finance() {
             </div>
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">Receita Confirmada</p>
-              <h2 className="text-2xl font-semibold mt-0.5">R$ {totalConfirmado.toFixed(2).replace('.', ',')}</h2>
+              <h2 className="text-2xl font-semibold mt-0.5">R$ {totalConfirmado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h2>
             </div>
           </div>
         </div>
@@ -143,8 +188,8 @@ export default function Finance() {
               <input required type="text" className="input-field" value={tipo} onChange={e => setTipo(e.target.value)} placeholder="Ex: Tráfego Pago" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Valor Mensal (R$)</label>
-              <input required type="number" step="0.01" className="input-field" value={valor} onChange={e => setValor(e.target.value)} placeholder="0.00" />
+              <label className="block text-xs font-medium text-gray-500 mb-1">Valor Mensal</label>
+              <input required type="text" className="input-field" value={valorDisplay} onChange={handleValorChange} placeholder="R$ 0,00" />
             </div>
             <div className="grid grid-cols-2 gap-4">
                <div>
@@ -153,7 +198,7 @@ export default function Finance() {
                </div>
                <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">Competência</label>
-                  <input required type="text" className="input-field" value={competencia} onChange={e => setCompetencia(e.target.value)} placeholder="04/2026" />
+                  <input required type="text" className="input-field" value={competencia} onChange={handleDateChange} placeholder="DD/MM/YYYY" maxLength={10} />
                </div>
             </div>
             <div className="md:col-span-2 flex justify-end gap-3 mt-2">
@@ -181,19 +226,20 @@ export default function Finance() {
                 <th className="px-6 py-4 font-medium">Serviço</th>
                 <th className="px-6 py-4 font-medium">Valor Mensal</th>
                 <th className="px-6 py-4 font-medium">Status</th>
+                <th className="px-6 py-4 font-medium text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-400">Carregando...</td></tr>
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">Carregando...</td></tr>
               ) : projetos.length === 0 ? (
-                <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-400">Nenhum projeto registrado.</td></tr>
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">Nenhum projeto registrado.</td></tr>
               ) : (
                 projetos.map((p) => (
-                  <tr key={p.id} className="hover:bg-black/[0.02] transition-colors">
+                  <tr key={p.id} className="hover:bg-black/[0.02] transition-colors group">
                     <td className="px-6 py-4 font-medium text-appleDark">{p.nome_projeto}</td>
                     <td className="px-6 py-4 text-gray-500">{p.tipo_servico}</td>
-                    <td className="px-6 py-4 font-medium">R$ {Number(p.valor_mensal).toFixed(2).replace('.', ',')}</td>
+                    <td className="px-6 py-4 font-medium">R$ {Number(p.valor_mensal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                     <td className="px-6 py-4">
                       <select
                         value={p.status_pagamento}
@@ -209,6 +255,15 @@ export default function Finance() {
                         <option>Atrasado</option>
                       </select>
                     </td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => handleDelete(p.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        title="Excluir"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -216,6 +271,7 @@ export default function Finance() {
           </table>
         </div>
       </div>
+
       <AIContextPanel
         modulo="Financeiro"
         contextoTexto={`Projetos:\n${aiContexto}\n\nReceita Total Esperada: R$ ${totalReceita.toFixed(2)}\nReceita Confirmada: R$ ${totalConfirmado.toFixed(2)}`}
