@@ -127,12 +127,12 @@ export default function Hosting() {
 
 ---
 
-O valor apresentado abaixo refere-se ao investimento anual para manutenção da infraestrutura e suporte especializado.`;
+O valor apresentado abaixo refere-se ao investimento anual para manutenção da infraestrutura e suporte especializado.
 
 ## 💰 Investimento
 Focamos em valor entregue, não apenas em custo de servidor.
 
-**Valor do Plano Premium:** R$ ${parseFloat(pValor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / mês
+**Valor do Plano Premium:** R$ ${parseFloat(pValor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / ano
 
 ---
 

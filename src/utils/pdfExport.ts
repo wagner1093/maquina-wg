@@ -289,8 +289,6 @@ export function exportProposalPDF(
   const doc = new jsPDF();
   const primaryColor = [0, 0, 0] as const; // Pure Black
   const grayColor = [100, 116, 139] as const; // Slate 500
-  const lightGray = [226, 232, 240] as const; // Slate 200
-  
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
