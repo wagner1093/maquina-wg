@@ -111,31 +111,23 @@ export default function Hosting() {
     if (!user || !pNome || !pValor) return;
 
     setCreatingProposal(true);
-    const content = `# Proposta de Infraestrutura e Hospedagem de Elite
+    const content = `## Benefícios do Plano
+- 30 Créditos do construtor de sites de IA
+- 50 GB do armazenamento NVMe mais rápido do mundo
+- 5 caixas de e-mail por site - grátis por 1 ano [GRÁTIS]
 
-Preparado exclusivamente para: **${pNome}**
-
----
-
-## 🚀 O Diferencial: Infraestrutura de Ultra Alta Performance
-Sua presença digital merece mais do que apenas um espaço em disco. Desenvolvemos uma solução focada em **vendas e conversão**, garantindo que seu site carregue instantaneamente.
-
-- **Armazenamento NVMe de Última Geração (50GB):** Até 10x mais rápido que SSDs comuns. Seu site voa, o Google ama e seus clientes ficam satisfeitos.
-- **Escalabilidade Ilimitada:** Capacidade para gerenciar até **50 sites** sob o mesmo painel profissional.
-- **Ecossistema Node.js Gerenciado:** Suporte para 5 aplicações web avançadas, permitindo ferramentas personalizadas e robôs.
-
-## 🤖 Bônus: Aceleração por Inteligência Artificial (Incluso)
-Não apenas hospedamos; entregamos ferramentas para você dominar o mercado em tempo recorde.
-- **Construtor de Sites com IA (30 Créditos):** Crie landing pages profissionais em minutos, não semanas.
-- **Agente IA para WordPress:** Automação total de conteúdo e otimização SEO dentro do seu site.
-- **WordPress Multisite:** Gerenciamento simplificado de redes de sites em um único ambiente.
-
-## 🛡️ Segurança e Paz de Espírito
-- **Seguro de Dados:** Backups diários e sob demanda. Nunca perca um byte de informação.
-- **Comunicação Profissional:** 5 caixas de e-mail empresariais por site (Grátis por 1 ano).
-- **Proteção Total:** Certificado SSL em todos os domínios e CDN global inclusa para velocidade máxima em qualquer lugar do mundo.
+## Tudo o que o plano Premium oferece, e mais:
+- 5 Aplicativos web Node.js gerenciados [NOVO]
+- Backups diários e sob demanda para evitar qualquer perda de dados
+- Crie uma loja virtual com IA
+- Agente com IA para WordPress [GRÁTIS]
+- Crie sites WordPress prontos para uso em minutos com a IA
+- Aproveite velocidade máxima no seu site com CDN grátis
+- Gerencie sites de forma simples com o WordPress Multisite
 
 ---
+
+O valor apresentado abaixo refere-se ao investimento anual para manutenção da infraestrutura e suporte especializado.`;
 
 ## 💰 Investimento
 Focamos em valor entregue, não apenas em custo de servidor.

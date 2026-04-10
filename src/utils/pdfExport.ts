@@ -287,183 +287,144 @@ export function exportProposalPDF(
   cliente?: { nome: string; empresa: string }
 ) {
   const doc = new jsPDF();
-  const primaryColor = [15, 23, 42] as const; // Slate 900 / Deep Navy
-  const textColor = [30, 41, 59] as const;    // Slate 800
-  const lightTextColor = [100, 116, 139] as const; // Slate 500
-  const bgColor = [248, 250, 252] as const;   // Slate 50
+  const primaryColor = [0, 0, 0] as const; // Pure Black
+  const grayColor = [100, 116, 139] as const; // Slate 500
+  const lightGray = [226, 232, 240] as const; // Slate 200
   
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20;
-  const contentWidth = pageWidth - (margin * 2) - 10; // Extra space for left bar
-  let y = 0;
 
-  // ─── BACKGROUND & ACCENT BAR ──────────────────────────────────────
-  const drawPageAssets = () => {
-    // Left Accent Bar (Premium feel)
-    doc.setFillColor(...primaryColor);
-    doc.rect(0, 0, 8, pageHeight, 'F');
+  // ─── COVER PAGE ──────────────────────────────────────────────────
+  const drawCover = () => {
+    doc.setTextColor(...primaryColor);
+    doc.setFont('helvetica', 'bold');
+    
+    // Large "PRO" "POSTA"
+    doc.setFontSize(100);
+    doc.text('PRO', 20, 100);
+    doc.text('POSTA', 20, 135);
+    
+    // Subtext
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.setCharSpace(2);
+    doc.text('WEB HOSPEDAGEM •', 20, 155);
+    doc.setCharSpace(0);
   };
 
-  drawPageAssets();
+  drawCover();
 
-  // ─── HEADER ────────────────────────────────────────────────────────
-  y = 30;
+  // ─── CONTENT PAGE ─────────────────────────────────────────────────
+  doc.addPage();
+  let y = 30;
+  const margin = 20;
+
+  // Header: "PLANO [NOME]"
   doc.setTextColor(...primaryColor);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(28);
-  doc.setCharSpace(0.5);
-  doc.text('PROPOSTA', margin + 5, y);
+  doc.setFontSize(22);
+  doc.text('PLANO', margin, y);
   
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setCharSpace(2);
-  doc.setTextColor(...lightTextColor);
-  doc.text('DOCUMENTO COMERCIAL EXCLUSIVO', margin + 5, y + 8);
+  const planName = proposta.titulo.split(' ').pop()?.toUpperCase() || 'HOSTING';
+  doc.setFontSize(60);
+  doc.text(planName, margin, y + 25);
   
-  y += 25;
+  y += 70;
 
-  // ─── CLIENT INFO ───────────────────────────────────────────────────
-  doc.setFillColor(...bgColor);
-  doc.rect(margin + 5, y, contentWidth, 20, 'F');
-  
-  doc.setTextColor(...primaryColor);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.text('PREPARADO PARA:', margin + 10, y + 8);
-  
-  doc.setTextColor(...textColor);
-  doc.setFontSize(14);
-  doc.text(cliente?.nome || 'CLIENTE ESPECIAL', margin + 10, y + 16);
-  
-  y += 35;
+  // Prices and Payment (Left Column)
+  if (proposta.valor_total) {
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('pagamento anual', margin, y);
+    
+    doc.setFontSize(36);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`R$ ${proposta.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`, margin, y + 16);
+    
+    y += 40;
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MÉTODO DE PAGAMENTO', margin, y);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...grayColor);
+    doc.text('Conforme sua preferência ou acordado com o Cliente', margin, y + 6);
+    
+    doc.setTextColor(...primaryColor);
+    doc.text('•  Boleto Bancário', margin + 5, y + 15);
+    doc.text('•  Pix', margin + 5, y + 22);
+  }
 
-  // ─── CONTENT PARSING ───────────────────────────────────────────────
+  // Features List (Right Column - Starts at y=30)
+  const rightColX = 130;
+  let ry = 30;
+
+  const drawBadge = (text: string, x: number, py: number, color: [number, number, number]) => {
+    doc.setFontSize(7);
+    const w = doc.getTextWidth(text) + 6;
+    doc.setFillColor(...color);
+    doc.roundedRect(x, py - 4, w, 6, 1, 1, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(7);
+    doc.text(text, x + 3, py + 0.5);
+  };
+
   const lines = proposta.conteudo.split('\n');
-  
   lines.forEach(line => {
-    // Page break handling
-    if (y > pageHeight - 30) {
-      doc.addPage();
-      drawPageAssets();
-      y = 30;
-    }
-
     const trimmed = line.trim();
-    if (trimmed === '') {
-      y += 4;
-      return;
-    }
+    if (!trimmed) return;
 
-    if (line.startsWith('# ')) {
-      y += 10;
+    if (trimmed.startsWith('## ')) {
+      ry += 4;
       doc.setTextColor(...primaryColor);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(20);
-      doc.text(line.replace('# ', '').toUpperCase(), margin + 5, y);
-      y += 12;
+      doc.setFontSize(11);
+      doc.text(trimmed.replace('## ', ''), rightColX, ry);
+      ry += 8;
     } 
-    else if (line.startsWith('## ')) {
-      y += 8;
-      doc.setTextColor(...primaryColor);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.text(line.replace('## ', ''), margin + 5, y);
-      
-      // Underline accent
-      doc.setDrawColor(...primaryColor);
-      doc.setLineWidth(0.5);
-      doc.line(margin + 5, y + 2, margin + 25, y + 2);
-      y += 10;
-    } 
-    else if (line.startsWith('---')) {
-      y += 5;
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.2);
-      doc.line(margin + 5, y, margin + 5 + contentWidth, y);
-      y += 8;
-    }
-    else if (line.startsWith('- ')) {
-      doc.setTextColor(...textColor);
-      doc.setFont('helvetica', 'normal');
+    else if (trimmed.startsWith('- ')) {
       doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...primaryColor);
       
-      const bulletText = line.replace('- ', '');
-      const parts = bulletText.split(':');
+      let text = trimmed.replace('- ', '');
+      let badge: { text: string, color: [number, number, number] } | null = null;
       
-      if (parts.length > 1) {
-        doc.setFont('helvetica', 'bold');
-        doc.text('• ' + parts[0] + ':', margin + 8, y);
-        const labelWidth = doc.getTextWidth('• ' + parts[0] + ': ');
-        doc.setFont('helvetica', 'normal');
-        
-        const description = parts.slice(1).join(':').trim();
-        const wrappedDetails = doc.splitTextToSize(description, contentWidth - labelWidth - 5);
-        
-        wrappedDetails.forEach((ld: string, i: number) => {
-          if (y > pageHeight - 20) { doc.addPage(); drawPageAssets(); y = 30; }
-          doc.text(ld, margin + 8 + (i === 0 ? labelWidth : 0), y);
-          if (i < wrappedDetails.length - 1) y += 5;
-        });
-      } else {
-        const wrappedLine = doc.splitTextToSize('• ' + bulletText, contentWidth - 5);
-        wrappedLine.forEach((l: string) => {
-           if (y > pageHeight - 20) { doc.addPage(); drawPageAssets(); y = 30; }
-           doc.text(l, margin + 8, y);
-           y += 5;
-        });
+      if (text.includes('[NOVO]')) {
+         text = text.replace('[NOVO]', '').trim();
+         badge = { text: 'NOVO', color: [168, 85, 247] }; // Purple
+      } else if (text.includes('[GRÁTIS]')) {
+         text = text.replace('[GRÁTIS]', '').trim();
+         badge = { text: 'GRÁTIS', color: [34, 197, 94] }; // Green
       }
-      y += 6;
-    }
-    else {
-      doc.setTextColor(...textColor);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      
-      // Simple bold support **text**
-      const cleanLine = line.replace(/\*\*(.*?)\*\*/g, '$1');
-      const wrappedLines = doc.splitTextToSize(cleanLine, contentWidth);
-      
-      wrappedLines.forEach((l: string) => {
-        if (y > pageHeight - 20) {
-          doc.addPage();
-          drawPageAssets();
-          y = 30;
+
+      // Checkmark icon simulation
+      doc.setDrawColor(34, 197, 94);
+      doc.setLineWidth(0.5);
+      doc.line(rightColX - 5, ry - 1, rightColX - 4, ry);
+      doc.line(rightColX - 4, ry, rightColX - 2, ry - 3);
+
+      const wrappedText = doc.splitTextToSize(text, pageWidth - rightColX - 10);
+      wrappedText.forEach((l: string, i: number) => {
+        doc.text(l, rightColX, ry);
+        if (i === wrappedText.length - 1 && badge) {
+           const textW = doc.getTextWidth(l);
+           drawBadge(badge.text, rightColX + textW + 5, ry, badge.color);
         }
-        doc.text(l, margin + 5, y);
-        y += 6;
+        ry += 5;
       });
+      ry += 2;
     }
   });
 
-  // ─── INVESTMENT BLOCK ──────────────────────────────────────────────
-  if (proposta.valor_total) {
-    y += 15;
-    if (y > pageHeight - 50) {
-      doc.addPage();
-      drawPageAssets();
-      y = 30;
-    }
+  // Footer / Branding Neutrality
+  doc.setTextColor(...grayColor);
+  doc.setFontSize(8);
+  doc.text(`Gerado para ${cliente?.empresa || 'Cliente'} em ${new Date().toLocaleDateString('pt-BR')}`, margin, pageHeight - 15);
 
-    doc.setFillColor(...primaryColor);
-    doc.rect(margin + 5, y, contentWidth, 35, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('INVESTIMENTO MENSAL:', margin + 15, y + 12);
-    
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`R$ ${proposta.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, margin + 15, y + 25);
-    
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(200, 200, 200);
-    doc.text('* Valor sujeito a reajuste anual conforme IGPM.', margin + 15, y + 31);
-  }
-
-  // Final Save
-  doc.save(`PROPOSTA_${cliente?.nome.replace(/\s+/g, '_') || 'COMERCIAL'}.pdf`);
+  doc.save(`PROPOSTA_WEB_${planName}.pdf`);
 }
+
 
