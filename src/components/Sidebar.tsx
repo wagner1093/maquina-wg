@@ -9,7 +9,6 @@ import { supabase } from '../supabase';
 
 export default function Sidebar() {
   const { signOut, user } = useAuth();
-  const navigate = useNavigate();
   const [urgentCount, setUrgentCount] = useState(0);
 
   useEffect(() => {

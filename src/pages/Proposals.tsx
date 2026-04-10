@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../context/AuthContext';
 import {
-  FileText, Plus, Sparkles, ChevronDown, X, Copy, Check,
+  FileText, Sparkles, ChevronDown, Copy, Check,
   Loader2, Download, Save, Trash2, ArrowLeft
 } from 'lucide-react';
+import { generateWithAI, hasOpenAIKey } from '../utils/ai';
 import { exportProposalPDF } from '../utils/pdfExport';
 import type { Cliente } from './Clients';
 

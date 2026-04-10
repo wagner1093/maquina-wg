@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { useAuth } from '../context/AuthContext';
 import {
   TrendingUp, Plus, X, ChevronDown, ChevronRight, Trash2,
-  DollarSign, Calendar, Building2, ArrowRight, User
+  DollarSign, Calendar, ArrowRight, User
 } from 'lucide-react';
 
 type Lead = {
