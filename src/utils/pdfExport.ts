@@ -288,7 +288,6 @@ export function exportProposalPDF(
 ) {
   const doc = new jsPDF();
   const primaryColor = [15, 23, 42] as const; // Slate 900 / Deep Navy
-  const accentColor = [22, 163, 74] as const;  // Green (Success/Investment)
   const textColor = [30, 41, 59] as const;    // Slate 800
   const lightTextColor = [100, 116, 139] as const; // Slate 500
   const bgColor = [248, 250, 252] as const;   // Slate 50
