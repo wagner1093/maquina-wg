@@ -111,24 +111,40 @@ export default function Hosting() {
     if (!user || !pNome || !pValor) return;
 
     setCreatingProposal(true);
-    const content = `# Proposta de Hospedagem Premium
+    const content = `# Proposta de Infraestrutura e Hospedagem de Elite
 
-## Resumo do Plano
-Este plano oferece o que há de mais moderno em hospedagem e performance, ideal para quem busca velocidade e segurança.
+Preparado exclusivamente para: **${pNome}**
 
-## O que está incluso:
-- **Até 50 sites**: Flexibilidade total para seu portfólio.
-- **30 Créditos de IA**: Use nosso construtor de sites inteligente.
-- **50 GB NVME**: Armazenamento de altíssima velocidade.
-- **E-mails Profissionais**: 5 caixas por site (grátis por 1 ano).
-- **5 Aplicativos Node.js**: Gerenciamento profissional de apps.
-- **Backups Diários**: Seus dados sempre seguros.
-- **Loja Virtual com IA**: Pronta para vender.
-- **WordPress Premium**: Agente com IA, CDN Grátis e Multisite.
+---
 
-## Investimento
-- **Valor da Proposta**: R$ ${parseFloat(pValor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-- **Condições**: Ativação imediata.`;
+## 🚀 O Diferencial: Infraestrutura de Ultra Alta Performance
+Sua presença digital merece mais do que apenas um espaço em disco. Desenvolvemos uma solução focada em **vendas e conversão**, garantindo que seu site carregue instantaneamente.
+
+- **Armazenamento NVMe de Última Geração (50GB):** Até 10x mais rápido que SSDs comuns. Seu site voa, o Google ama e seus clientes ficam satisfeitos.
+- **Escalabilidade Ilimitada:** Capacidade para gerenciar até **50 sites** sob o mesmo painel profissional.
+- **Ecossistema Node.js Gerenciado:** Suporte para 5 aplicações web avançadas, permitindo ferramentas personalizadas e robôs.
+
+## 🤖 Bônus: Aceleração por Inteligência Artificial (Incluso)
+Não apenas hospedamos; entregamos ferramentas para você dominar o mercado em tempo recorde.
+- **Construtor de Sites com IA (30 Créditos):** Crie landing pages profissionais em minutos, não semanas.
+- **Agente IA para WordPress:** Automação total de conteúdo e otimização SEO dentro do seu site.
+- **WordPress Multisite:** Gerenciamento simplificado de redes de sites em um único ambiente.
+
+## 🛡️ Segurança e Paz de Espírito
+- **Seguro de Dados:** Backups diários e sob demanda. Nunca perca um byte de informação.
+- **Comunicação Profissional:** 5 caixas de e-mail empresariais por site (Grátis por 1 ano).
+- **Proteção Total:** Certificado SSL em todos os domínios e CDN global inclusa para velocidade máxima em qualquer lugar do mundo.
+
+---
+
+## 💰 Investimento
+Focamos em valor entregue, não apenas em custo de servidor.
+
+**Valor do Plano Premium:** R$ ${parseFloat(pValor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / mês
+
+---
+
+*Esta proposta garante exclusividade de recursos e suporte técnico prioritário para a expansão do seu ecossistema digital.*`;
 
     const { error } = await supabase.from('maquinawg_propostas').insert([{
       user_id: user.id,

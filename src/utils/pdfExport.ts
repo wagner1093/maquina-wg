@@ -52,7 +52,7 @@ export function exportTrafficClientPDF(
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}  ·  Sistema Pessoal WG`, 14, 30);
+  doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
 
   y = 54;
 
@@ -191,7 +191,7 @@ export function exportTrafficClientPDF(
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text('Sistema Pessoal WG  ·  Gerado automaticamente', 14, pageHeight - 4);
+  doc.text('Relatório de Performance Gerencial', 14, pageHeight - 4);
 
   doc.save(`Relatorio_${cliente.nome.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
 }
@@ -218,7 +218,7 @@ export function exportFinancePDF(
   doc.text('Extrato Financeiro Mensal', 14, 18);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Competência: ${mes}  ·  Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
+  doc.text(`Competência: ${mes}  ·  Relatório de Conferência`, 14, 30);
 
   y = 54;
 
@@ -277,7 +277,7 @@ export function exportFinancePDF(
   doc.rect(0, pageHeight - 12, pageWidth, 12, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
-  doc.text('Sistema Pessoal WG  ·  Extrato gerado automaticamente', 14, pageHeight - 4);
+  doc.text('Extrato Gerencial Mensal', 14, pageHeight - 4);
 
   doc.save(`Extrato_Financeiro_${mes.replace('/', '-')}.pdf`);
 }
@@ -287,108 +287,184 @@ export function exportProposalPDF(
   cliente?: { nome: string; empresa: string }
 ) {
   const doc = new jsPDF();
-  const blue = [0, 102, 204] as const;
-  const dark = [29, 29, 31] as const;
-  const gray = [107, 114, 128] as const;
-  const lightGray = [245, 245, 247] as const;
+  const primaryColor = [15, 23, 42] as const; // Slate 900 / Deep Navy
+  const accentColor = [22, 163, 74] as const;  // Green (Success/Investment)
+  const textColor = [30, 41, 59] as const;    // Slate 800
+  const lightTextColor = [100, 116, 139] as const; // Slate 500
+  const bgColor = [248, 250, 252] as const;   // Slate 50
+  
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentWidth = pageWidth - (margin * 2) - 10; // Extra space for left bar
   let y = 0;
 
-  // Header
-  doc.setFillColor(...blue);
-  doc.rect(0, 0, pageWidth, 40, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
+  // ─── BACKGROUND & ACCENT BAR ──────────────────────────────────────
+  const drawPageAssets = () => {
+    // Left Accent Bar (Premium feel)
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, 8, pageHeight, 'F');
+  };
+
+  drawPageAssets();
+
+  // ─── HEADER ────────────────────────────────────────────────────────
+  y = 30;
+  doc.setTextColor(...primaryColor);
   doc.setFont('helvetica', 'bold');
-  doc.text('Proposta Comercial', 14, 18);
+  doc.setFontSize(28);
+  doc.setCharSpace(0.5);
+  doc.text('PROPOSTA', margin + 5, y);
+  
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Gerada em ${new Date(proposta.created_at).toLocaleDateString('pt-BR')}  ·  Sistema Pessoal WG`, 14, 30);
+  doc.setCharSpace(2);
+  doc.setTextColor(...lightTextColor);
+  doc.text('DOCUMENTO COMERCIAL EXCLUSIVO', margin + 5, y + 8);
+  
+  y += 25;
 
-  y = 54;
-
-  // Title Box
-  doc.setFillColor(...lightGray);
-  doc.roundedRect(14, y - 8, pageWidth - 28, 25, 3, 3, 'F');
-  doc.setTextColor(...dark);
+  // ─── CLIENT INFO ───────────────────────────────────────────────────
+  doc.setFillColor(...bgColor);
+  doc.rect(margin + 5, y, contentWidth, 20, 'F');
+  
+  doc.setTextColor(...primaryColor);
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('PREPARADO PARA:', margin + 10, y + 8);
+  
+  doc.setTextColor(...textColor);
   doc.setFontSize(14);
-  doc.text(proposta.titulo, 20, y + 2);
+  doc.text(cliente?.nome || 'CLIENTE ESPECIAL', margin + 10, y + 16);
+  
+  y += 35;
 
-  if (cliente) {
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...gray);
-    doc.text(`Cliente: ${cliente.nome} ${cliente.empresa ? `· ${cliente.empresa}` : ''}`, 20, y + 10);
-  }
-
-  y += 30;
-
-  // Content
-  doc.setTextColor(...dark);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-
-  // Simple markdown-ish to plain text for jsPDF
+  // ─── CONTENT PARSING ───────────────────────────────────────────────
   const lines = proposta.conteudo.split('\n');
+  
   lines.forEach(line => {
+    // Page break handling
     if (y > pageHeight - 30) {
       doc.addPage();
-      y = 20;
+      drawPageAssets();
+      y = 30;
+    }
+
+    const trimmed = line.trim();
+    if (trimmed === '') {
+      y += 4;
+      return;
     }
 
     if (line.startsWith('# ')) {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.text(line.replace('# ', ''), 14, y);
       y += 10;
-    } else if (line.startsWith('## ')) {
+      doc.setTextColor(...primaryColor);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text(line.replace('## ', ''), 14, y);
+      doc.setFontSize(20);
+      doc.text(line.replace('# ', '').toUpperCase(), margin + 5, y);
+      y += 12;
+    } 
+    else if (line.startsWith('## ')) {
       y += 8;
-    } else if (line.startsWith('### ')) {
+      doc.setTextColor(...primaryColor);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text(line.replace('### ', ''), 14, y);
-      y += 7;
-    } else {
+      doc.setFontSize(13);
+      doc.text(line.replace('## ', ''), margin + 5, y);
+      
+      // Underline accent
+      doc.setDrawColor(...primaryColor);
+      doc.setLineWidth(0.5);
+      doc.line(margin + 5, y + 2, margin + 25, y + 2);
+      y += 10;
+    } 
+    else if (line.startsWith('---')) {
+      y += 5;
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.2);
+      doc.line(margin + 5, y, margin + 5 + contentWidth, y);
+      y += 8;
+    }
+    else if (line.startsWith('- ')) {
+      doc.setTextColor(...textColor);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       
-      // Handle bold in line **text**
+      const bulletText = line.replace('- ', '');
+      const parts = bulletText.split(':');
+      
+      if (parts.length > 1) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('• ' + parts[0] + ':', margin + 8, y);
+        const labelWidth = doc.getTextWidth('• ' + parts[0] + ': ');
+        doc.setFont('helvetica', 'normal');
+        
+        const description = parts.slice(1).join(':').trim();
+        const wrappedDetails = doc.splitTextToSize(description, contentWidth - labelWidth - 5);
+        
+        wrappedDetails.forEach((ld: string, i: number) => {
+          if (y > pageHeight - 20) { doc.addPage(); drawPageAssets(); y = 30; }
+          doc.text(ld, margin + 8 + (i === 0 ? labelWidth : 0), y);
+          if (i < wrappedDetails.length - 1) y += 5;
+        });
+      } else {
+        const wrappedLine = doc.splitTextToSize('• ' + bulletText, contentWidth - 5);
+        wrappedLine.forEach((l: string) => {
+           if (y > pageHeight - 20) { doc.addPage(); drawPageAssets(); y = 30; }
+           doc.text(l, margin + 8, y);
+           y += 5;
+        });
+      }
+      y += 6;
+    }
+    else {
+      doc.setTextColor(...textColor);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      
+      // Simple bold support **text**
       const cleanLine = line.replace(/\*\*(.*?)\*\*/g, '$1');
-      const wrappedLines = doc.splitTextToSize(cleanLine, pageWidth - 28);
+      const wrappedLines = doc.splitTextToSize(cleanLine, contentWidth);
+      
       wrappedLines.forEach((l: string) => {
         if (y > pageHeight - 20) {
           doc.addPage();
-          y = 20;
+          drawPageAssets();
+          y = 30;
         }
-        doc.text(l, 14, y);
-        y += 5;
+        doc.text(l, margin + 5, y);
+        y += 6;
       });
-      if (line.trim() === '') y += 2;
     }
   });
 
+  // ─── INVESTMENT BLOCK ──────────────────────────────────────────────
   if (proposta.valor_total) {
-    y += 10;
-    if (y > pageHeight - 30) { doc.addPage(); y = 20; }
-    doc.setFillColor(...lightGray);
-    doc.roundedRect(14, y - 5, pageWidth - 28, 15, 2, 2, 'F');
+    y += 15;
+    if (y > pageHeight - 50) {
+      doc.addPage();
+      drawPageAssets();
+      y = 30;
+    }
+
+    doc.setFillColor(...primaryColor);
+    doc.rect(margin + 5, y, contentWidth, 35, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('INVESTIMENTO MENSAL:', margin + 15, y + 12);
+    
+    doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(...blue);
-    doc.text(`Investimento Total: R$ ${proposta.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, y + 5);
+    doc.text(`R$ ${proposta.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, margin + 15, y + 25);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(200, 200, 200);
+    doc.text('* Valor sujeito a reajuste anual conforme IGPM.', margin + 15, y + 31);
   }
 
-  // Footer
-  doc.setFillColor(...blue);
-  doc.rect(0, pageHeight - 12, pageWidth, 12, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  doc.text('Sistema Pessoal WG  ·  Proposta gerada automaticamente', 14, pageHeight - 4);
-
-  doc.save(`Proposta_${proposta.titulo.replace(/\s+/g, '_')}.pdf`);
+  // Final Save
+  doc.save(`PROPOSTA_${cliente?.nome.replace(/\s+/g, '_') || 'COMERCIAL'}.pdf`);
 }
+
